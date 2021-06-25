@@ -1,0 +1,22 @@
+---
+# Checks whether kubernetes is already installed on node
+
+- name: Check if kubernetes is already installed
+  command: kubectl --kubeconfig /etc/kubernetes/kubelet.conf cluster-info
+  ignore_errors: true
+  failed_when: false
+  register: kubernetes_installed_check
+
+- name: Set fact for use in future plays
+  set_fact:
+    kubernetes_installed: '{{ true if (kubernetes_installed_check["rc"] == 0) else false }}' 
+
+- name: Get kubernetes version
+  command: kubectl --kubeconfig /etc/kubernetes/kubelet.conf version --short=true 
+  ignore_errors: true
+  failed_when: false
+  register: kubernetes_version_check
+
+- name: Set fact for use in future plays
+  set_fact:
+    kubernetes_version: '{{ kubernetes_version_check["stdout_lines"][1].split(" ")[-1][1:] if kubernetes_installed else "" }}'

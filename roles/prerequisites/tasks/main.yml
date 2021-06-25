@@ -1,0 +1,12 @@
+---
+# This role installs all of the required components required to create kubernetes clusters
+# e.g. containerd, kubeadm, kubectl etc. 
+
+- name: Configure required kernel settings
+  import_tasks: kernel.yml
+
+- name: Set up apt repositories for containerd and kubernetes
+  import_tasks: repos.yml
+
+- name: Install containerd and kubernetes packages
+  import_tasks: packages.yml

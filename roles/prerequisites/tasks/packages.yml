@@ -1,0 +1,30 @@
+---
+# Installs and configures containerd
+# Also performs kubernetes installation steps that are required for all nodes
+
+- name: Install containerd
+  apt:
+    update_cache: no
+    name: 
+      - containerd.io
+
+- name: Make containerd folder
+  command: mkdir -p /etc/containerd
+
+- name: Move containerd configuration
+  copy:
+    src: containerd-config.toml
+    dest: /etc/containerd/config.toml
+  notify:
+    - restart-containerd
+
+- name: Install kubernetes componenets
+  apt:
+    update_cache: no
+    name:
+      - kubelet={{ kube_version_install }}*
+      - kubeadm={{ kube_version_install }}*
+      - kubectl={{ kube_version_install }}*
+
+- name: Hold kubernetes components
+  command: apt-mark hold kubelet kubeadm kubectl

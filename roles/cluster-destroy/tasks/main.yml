@@ -1,0 +1,13 @@
+---
+# Cleans up kubernetes cluster installation on all nodes
+
+- name: Drain kubernetes node
+  command: kubectl --kubeconfig /etc/kubernetes/*.conf drain {{ ansible_facts["nodename"] }} --delete-local-data --force --ignore-daemonsets
+  ignore_errors: yes
+  failed_when: false
+
+- name: Revert kubeadm changes
+  command: kubeadm reset -f
+
+- name: Clean IPTables entries
+  shell: iptables -F && iptables -t nat -F && iptables -t mangle -F && iptables -X

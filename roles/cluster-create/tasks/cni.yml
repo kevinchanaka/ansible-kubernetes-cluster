@@ -1,0 +1,10 @@
+---
+# Below tasks are intended to install the weave-net CNI plugin
+# This file can be replaced with custom commands to install the CNI plugin of your choice
+
+- name: Get encoded kubernetes version (required for weave-net installation)
+  shell: kubectl --kubeconfig /etc/kubernetes/admin.conf version | base64 | tr -d '\n'
+  register: kubernetes_version_encoded
+
+- name: Apply weave-net manifest 
+  command: kubectl --kubeconfig /etc/kubernetes/admin.conf apply -f "https://cloud.weave.works/k8s/net?k8s-version={{ kubernetes_version_encoded["stdout"] }}"

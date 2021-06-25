@@ -1,0 +1,17 @@
+ansible==4.1.0
+ansible-core==2.11.1
+certifi==2021.5.30
+cffi==1.14.5
+chardet==4.0.0
+cryptography==3.4.7
+idna==2.10
+Jinja2==3.0.1
+MarkupSafe==2.0.1
+packaging==20.9
+proxmoxer==1.1.1
+pycparser==2.20
+pyparsing==2.4.7
+PyYAML==5.4.1
+requests==2.25.1
+resolvelib==0.5.4
+urllib3==1.26.5

@@ -1,0 +1,30 @@
+apiVersion: kubeadm.k8s.io/v1beta2
+kind: InitConfiguration
+bootstrapTokens:
+- token: "{{ kubeadm_token["stdout"] }}"
+  description: kubeadm bootstrap token
+---
+kind: ClusterConfiguration
+apiVersion: kubeadm.k8s.io/v1beta2
+kubernetesVersion: v{{ kube_version_install }}
+{% if control_plane_endpoint is defined and control_plane_endpoint != "" %}
+controlPlaneEndpoint: {{ control_plane_endpoint }}
+{% endif %}
+apiServer:
+  extraArgs:
+    advertise-address: "{{ ansible_facts["default_ipv4"]["address"] }}"
+{% if cronjob_local_timezone is defined and cronjob_local_timezone != "" %}
+controllerManager:
+  extraVolumes:
+  - name: tz-info
+    hostPath: /usr/share/zoneinfo/{{ cronjob_local_timezone }}
+    mountPath: /etc/localtime
+    readOnly: true
+    pathType: File
+{% endif %}
+networking:
+  podSubnet: {{ pod_network_cidr }}
+---
+kind: KubeletConfiguration
+apiVersion: kubelet.config.k8s.io/v1beta1
+cgroupDriver: systemd

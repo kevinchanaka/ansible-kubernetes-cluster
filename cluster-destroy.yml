@@ -1,0 +1,18 @@
+- name: Deprovision worker nodes
+  hosts: workers
+  become: yes
+  roles:
+    - role: cluster-destroy
+
+- name: Deprovision secondary master nodes (where kubeadm join was used)
+  hosts: extra_masters
+  become: yes
+  roles:
+    - role: cluster-destroy
+
+- name: Deprovision main master node (where kubeadm init was used)
+  hosts: master
+  become: yes
+  roles:
+    - role: cluster-destroy
+  
