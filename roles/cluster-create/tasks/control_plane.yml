@@ -18,6 +18,13 @@
   register: kubeadm_init_output
   when: kubernetes_installed is false
 
+- name: Upload certificates to kubeadm-certs secret
+  command: kubeadm init phase upload-certs --upload-certs
+  register: kubeadm_certs_output
+
+- name: Store generated token on control plane
+  command: kubeadm token create {{ kubeadm_token.stdout }}
+
 - name: Get CA hash
   shell: openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'
   register: ca_cert_hash
@@ -28,3 +35,4 @@
     token: "{{ kubeadm_token.stdout }}"
     ca_cert_hash: "{{ ca_cert_hash.stdout }}"
     endpoint: '{{ control_plane_endpoint if ((control_plane_endpoint is defined) and (control_plane_endpoint != "")) else ansible_facts["default_ipv4"]["address"] }}' 
+    certificate_key: '{{ kubeadm_certs_output["stdout_lines"][-1] }}'

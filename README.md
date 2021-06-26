@@ -2,6 +2,8 @@
 
 Ansible playbook to provision a kubernetes cluster via kubeadm
 
+This playbook is only supported for Ubuntu 20 LTS instances but should also work for Ubuntu 18 LTS
+
 ## Preparation
 
 Run the following commands to prepare Python virtual environment for Ansible
@@ -47,5 +49,4 @@ all:
         <IP_OF_WORKER_NODE_1>:
         <IP_OF_WORKER_NODE_2>:
         <IP_OF_WORKER_NODE_3>:
-
 ```

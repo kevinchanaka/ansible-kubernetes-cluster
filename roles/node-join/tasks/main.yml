@@ -1,6 +1,9 @@
 ---
 - name: Join node to cluster as control plane node
-  command: kubeadm join {{ hostvars["kubeadm_vars"]["endpoint"] }}:6443 --token {{ hostvars["kubeadm_vars"]["token"] }} --discovery-token-ca-cert-hash sha256:{{ hostvars["kubeadm_vars"]["ca_cert_hash"] }} --control-plane
+  command: >
+    kubeadm join {{ hostvars["kubeadm_vars"]["endpoint"] }}:6443 --token {{ hostvars["kubeadm_vars"]["token"] }}
+    --discovery-token-ca-cert-hash sha256:{{ hostvars["kubeadm_vars"]["ca_cert_hash"] }} --control-plane
+    --certificate-key {{ hostvars["kubeadm_vars"]["certificate_key"] }}
   when: 
     - control_plane
     - kubernetes_installed is false
@@ -8,7 +11,9 @@
     - control_plane_endpoint != ""
 
 - name: Join node to cluster as worker node
-  command: kubeadm join {{ hostvars["kubeadm_vars"]["endpoint"] }}:6443 --token {{ hostvars["kubeadm_vars"]["token"] }} --discovery-token-ca-cert-hash sha256:{{ hostvars["kubeadm_vars"]["ca_cert_hash"] }}
+  command: >
+    kubeadm join {{ hostvars["kubeadm_vars"]["endpoint"] }}:6443 --token {{ hostvars["kubeadm_vars"]["token"] }}
+    --discovery-token-ca-cert-hash sha256:{{ hostvars["kubeadm_vars"]["ca_cert_hash"] }}
   when:
     - control_plane is false
     - kubernetes_installed is false
