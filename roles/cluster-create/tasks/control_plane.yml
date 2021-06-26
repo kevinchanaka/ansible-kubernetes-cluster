@@ -22,8 +22,11 @@
   command: kubeadm init phase upload-certs --upload-certs
   register: kubeadm_certs_output
 
-- name: Store generated token on control plane
+  # The task before this play stores the token on the API server, but the above task can only be run once
+  # Hence, running below task to manually store token on API server for future playbook runs
+- name: Store generated token on control plane 
   command: kubeadm token create {{ kubeadm_token.stdout }}
+  when: kubernetes_installed is true
 
 - name: Get CA hash
   shell: openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'

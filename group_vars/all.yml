@@ -1,5 +1,5 @@
 ---
-# Variables used for installing kubernetes cluster
+# Variables used for kubernetes cluster
 
 # Version of kubernetes to install
 kube_version_install: "1.20.8"
