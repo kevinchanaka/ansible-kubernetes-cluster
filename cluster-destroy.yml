@@ -1,18 +1,28 @@
-- name: Deprovision worker nodes
-  hosts: workers
+---
+- name: Retrieve information about currently installed kubernetes version
+  hosts: all
   become: yes
   roles:
-    - role: cluster-destroy
+    - role: kube-version
 
-- name: Deprovision secondary master nodes (where kubeadm join was used)
-  hosts: extra_masters
-  become: yes
-  roles:
-    - role: cluster-destroy
-
-- name: Deprovision main master node (where kubeadm init was used)
+- name: Drain and delete all nodes
   hosts: master
   become: yes
+  tasks:
+    - name: Drain all nodes
+      command: kubectl --kubeconfig {{ kubeconfig }} drain {{ hostvars[item]["ansible_nodename"] }} --delete-local-data --force --ignore-daemonsets
+      ignore_errors: yes
+      failed_when: false
+      loop: '{{ groups["all"] }}'
+      
+    - name: Delete all nodes
+      command: kubectl --kubeconfig {{ kubeconfig }} delete node {{ hostvars[item]["ansible_nodename"] }}
+      ignore_errors: yes
+      failed_when: false
+      loop: '{{ groups["all"] }}'
+
+- name: Revert kubernetes installation
+  hosts: all
+  become: yes
   roles:
     - role: cluster-destroy
-  
