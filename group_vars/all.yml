@@ -16,3 +16,11 @@ pod_network_cidr: 10.32.0.0/12
 # Set to empty string to keep default behavour (uses UTC time)
 # Refer to link for more info: https://github.com/kubernetes/kubernetes/issues/80577
 cronjob_local_timezone: Australia/Sydney
+
+# Version of kubernetes to upgrade to, used in the "cluster-upgrade.yml" playbook
+# Check for latest kubernetes versions from below links
+# https://kubernetes.io/releases/
+# https://github.com/kubernetes/kubernetes/tree/master/CHANGELOG
+# Please refer to kubeadm documentation before initiating upgrade
+# https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/
+kube_version_upgrade: "1.21.2"

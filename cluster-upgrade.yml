@@ -1,0 +1,38 @@
+---
+# Upgrades kubernetes version, please reveiw documenation before running
+# https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/
+
+- name: Retrieve information about currently installed kubernetes version
+  hosts: all
+  become: yes
+  roles:
+    - role: kube-version
+
+- name: Upgrade first control plane node
+  hosts: master
+  become: yes
+  roles:
+    - role: cluster-upgrade
+      first_control_plane_node: true
+
+- name: Upgrade additional control plane nodes
+  hosts: extra_masters
+  become: yes
+  serial: 1
+  roles:
+    - role: cluster-upgrade
+      first_control_plane_node: false
+      
+- name: Upgrade worker nodes
+  hosts: workers
+  become: yes
+  serial: 1
+  roles:
+    - role: cluster-upgrade
+      first_control_plane_node: false
+
+- name: Get kubernetes nodes
+  hosts: master
+  become: yes
+  roles:
+    - role: node-get

@@ -30,3 +30,9 @@
   roles:
     - role: node-join
       control_plane: false
+
+- name: Get kubernetes nodes
+  hosts: master
+  become: yes
+  roles:
+    - role: node-get
