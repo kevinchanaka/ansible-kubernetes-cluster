@@ -16,7 +16,13 @@ pip install -r requirements.txt
 
 ## Usage
 
-Populate the `group_vars/all.yml` and `hosts.yml` with appropriate configuration and run the following command to provision the cluster
+Populate the `group_vars/all.yml` and `hosts.yml` with appropriate configuration
+
+Run the following command to install packages and kubernetes components required for cluster creation. This will also reboot the targeted nodes if required
+
+`ansible-playbook -i hosts.yml prerequisites.yml`
+
+Next, run the following command to provision the cluster
 
 `ansible-playbook -i hosts.yml cluster-create.yml`
 

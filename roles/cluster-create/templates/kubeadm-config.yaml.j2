@@ -13,8 +13,10 @@ controlPlaneEndpoint: {{ control_plane_endpoint }}
 apiServer:
   extraArgs:
     advertise-address: "{{ ansible_facts["default_ipv4"]["address"] }}"
-{% if cronjob_local_timezone is defined and cronjob_local_timezone != "" %}
 controllerManager:
+  extraArgs:
+    bind-address: "0.0.0.0"
+{% if cronjob_local_timezone is defined and cronjob_local_timezone != "" %}
   extraVolumes:
   - name: tz-info
     hostPath: /usr/share/zoneinfo/{{ cronjob_local_timezone }}
@@ -22,6 +24,9 @@ controllerManager:
     readOnly: true
     pathType: File
 {% endif %}
+scheduler:
+  extraArgs:
+    bind-address: "0.0.0.0"
 networking:
   podSubnet: {{ pod_network_cidr }}
 ---

@@ -2,11 +2,14 @@
 # Variables used for kubernetes cluster
 
 # Version of kubernetes to install
-kube_version_install: "1.20.8"
+# Check for latest kubernetes versions from below links
+# https://github.com/kubernetes/kubernetes/tree/master/CHANGELOG
+# https://kubernetes.io/releases/
+kube_version_install: "1.21.3"
 
 # Endpoint for the Kubernetes control plane, this is required for highly available clusters
 # This can be set to empty string for clusters with a single master node
-control_plane_endpoint: "kube-apiserver.test.local"
+control_plane_endpoint: "kube-apiserver.local"
 
 # Pod network CIDR range, this should be set as per the requirements of your desired CNI plugin
 # Value provided below is the CIDR range for weave-net CNI plugin which is also installed by this playbook
@@ -18,9 +21,6 @@ pod_network_cidr: 10.32.0.0/12
 cronjob_local_timezone: Australia/Sydney
 
 # Version of kubernetes to upgrade to, used in the "cluster-upgrade.yml" playbook
-# Check for latest kubernetes versions from below links
-# https://kubernetes.io/releases/
-# https://github.com/kubernetes/kubernetes/tree/master/CHANGELOG
 # Please refer to kubeadm documentation before initiating upgrade
 # https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/
-kube_version_upgrade: "1.21.2"
+kube_version_upgrade: "1.21.3"

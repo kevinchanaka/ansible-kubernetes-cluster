@@ -1,0 +1,6 @@
+---
+- name: Install required components for cluster creation
+  hosts: all
+  become: yes
+  roles:
+   - prerequisites

@@ -1,6 +1,6 @@
 ---
 # Installs and configures containerd
-# Also performs kubernetes installation steps that are required for all nodes
+# Also updates other packages on OS and reboots if required
 
 - name: Install containerd
   apt:
@@ -28,3 +28,17 @@
 
 - name: Hold kubernetes components
   command: apt-mark hold kubelet kubeadm kubectl
+
+- name: Upgrade rest of OS packages
+  apt:
+    update_cache: no
+    upgrade: yes
+
+- name: Check if reboot required
+  stat:
+    path: /var/run/reboot-required
+  register: reboot_required_file
+
+- name: Reboot if required
+  reboot:
+  when: reboot_required_file.stat.exists == true
