@@ -1,4 +1,21 @@
 ---
+- name: Create kubernetes folder
+  file:
+    path: /etc/kubernetes
+    state: directory
+
+- name: Create apiserver audit log folder
+  file:
+    path: /var/log/kube-apiserver-audit
+    state: directory
+  when: control_plane is true
+
+- name: Copy audit policy config file
+  copy: 
+    src: ../../cluster-create/files/audit-policy.yaml
+    dest: /etc/kubernetes/audit-policy.yaml
+  when: control_plane is true
+
 - name: Join node to cluster as control plane node
   command: >
     kubeadm join {{ hostvars["kubeadm_vars"]["endpoint"] }}:6443 --token {{ hostvars["kubeadm_vars"]["token"] }}

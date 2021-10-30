@@ -1,9 +1,11 @@
+{% if kubeadm_token is defined %}
 apiVersion: kubeadm.k8s.io/v1beta2
 kind: InitConfiguration
 bootstrapTokens:
 - token: "{{ kubeadm_token["stdout"] }}"
   description: kubeadm bootstrap token
 ---
+{% endif %}
 kind: ClusterConfiguration
 apiVersion: kubeadm.k8s.io/v1beta2
 kubernetesVersion: v{{ kube_version_install }}
@@ -13,6 +15,21 @@ controlPlaneEndpoint: {{ control_plane_endpoint }}
 apiServer:
   extraArgs:
     advertise-address: "{{ ansible_facts["default_ipv4"]["address"] }}"
+{% if audit_logs_enable == true %}
+    audit-policy-file: "/etc/kubernetes/audit-policy.yaml"
+    audit-log-path: "/var/log/kube-apiserver-audit/audit.log"
+  extraVolumes:
+  - name: audit-policy
+    hostPath: /etc/kubernetes/audit-policy.yaml
+    mountPath: /etc/kubernetes/audit-policy.yaml
+    readOnly: true
+    pathType: File
+  - name: audit-log
+    hostPath: /var/log/kube-apiserver-audit
+    mountPath: /var/log/kube-apiserver-audit
+    readOnly: false
+    pathType: Directory
+{% endif %}
 controllerManager:
   extraArgs:
     bind-address: "0.0.0.0"
@@ -33,3 +50,7 @@ networking:
 kind: KubeletConfiguration
 apiVersion: kubelet.config.k8s.io/v1beta1
 cgroupDriver: systemd
+---
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+kind: KubeProxyConfiguration
+metricsBindAddress: "0.0.0.0:10249"

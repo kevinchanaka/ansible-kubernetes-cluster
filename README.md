@@ -30,6 +30,14 @@ If errors are encountered during provisioning, or if you would like to clean-up 
 
 `ansible-playbook -i hosts.yml cluster-destroy.yml`
 
+To update cluster configuration (e.g. updating static manifests) without updating kubernetes version, run the following
+
+`ansible-playbook -i hosts.yml cluster-update.yml`
+
+Finally, to update the kubernetes version of the cluster, run the following
+
+`ansible-playbook -i hosts.yml cluster-upgrade.yml`
+
 ## Configuration
 
 ### Variables

@@ -7,6 +7,11 @@
 # https://kubernetes.io/releases/
 kube_version_install: "1.21.3"
 
+# Version of kubernetes to upgrade to, used in the "cluster-upgrade.yml" playbook
+# Please refer to kubeadm documentation before initiating upgrade
+# https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/
+kube_version_upgrade: "1.21.3"
+
 # Endpoint for the Kubernetes control plane, this is required for highly available clusters
 # This can be set to empty string for clusters with a single master node
 control_plane_endpoint: "kube-apiserver.local"
@@ -20,7 +25,7 @@ pod_network_cidr: 10.32.0.0/12
 # Refer to link for more info: https://github.com/kubernetes/kubernetes/issues/80577
 cronjob_local_timezone: Australia/Sydney
 
-# Version of kubernetes to upgrade to, used in the "cluster-upgrade.yml" playbook
-# Please refer to kubeadm documentation before initiating upgrade
-# https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/
-kube_version_upgrade: "1.21.3"
+# Enable kube-apiserver audit logs
+# Audit logs are printed to stdout of kube-apiserver container
+# This output can be streamed to external logging systems
+audit_logs_enable: true
