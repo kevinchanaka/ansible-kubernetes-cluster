@@ -15,9 +15,10 @@ controlPlaneEndpoint: {{ control_plane_endpoint }}
 apiServer:
   extraArgs:
     advertise-address: "{{ ansible_facts["default_ipv4"]["address"] }}"
-{% if audit_logs_enable == true %}
+{% if audit_logs.enable == true %}
     audit-policy-file: "/etc/kubernetes/audit-policy.yaml"
     audit-log-path: "/var/log/kube-apiserver-audit/audit.log"
+    audit-log-maxage: "{{ audit_logs["retention_days"] }}"
   extraVolumes:
   - name: audit-policy
     hostPath: /etc/kubernetes/audit-policy.yaml

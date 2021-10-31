@@ -26,6 +26,8 @@ pod_network_cidr: 10.32.0.0/12
 cronjob_local_timezone: Australia/Sydney
 
 # Enable kube-apiserver audit logs
-# Audit logs are printed to stdout of kube-apiserver container
+# Audit logs are populated at /var/log/kube-apiserver-audit/ directory on master nodes
 # This output can be streamed to external logging systems
-audit_logs_enable: true
+audit_logs: 
+  enable: true
+  retention_days: 1
