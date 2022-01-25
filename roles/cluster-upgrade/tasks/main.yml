@@ -23,7 +23,7 @@
   when: first_control_plane_node is false
 
 - name: Drain kubernetes node
-  command: kubectl --kubeconfig /etc/kubernetes/admin.conf drain {{ ansible_facts["nodename"] }} --force --ignore-daemonsets
+  command: kubectl --kubeconfig /etc/kubernetes/admin.conf drain {{ ansible_facts["nodename"] }} --force --ignore-daemonsets --delete-emptydir-data
   delegate_to: '{{ groups["master"][0] }}'
 
 - name: Update kubelet and kubectl

@@ -10,7 +10,7 @@
   become: yes
   tasks:
     - name: Drain all nodes
-      command: kubectl --kubeconfig {{ kubeconfig }} drain {{ hostvars[item]["ansible_nodename"] }} --delete-local-data --force --ignore-daemonsets
+      command: kubectl --kubeconfig {{ kubeconfig }} drain {{ hostvars[item]["ansible_nodename"] }} --delete-emptydir-data --force --ignore-daemonsets
       ignore_errors: yes
       failed_when: false
       loop: '{{ groups["all"] }}'
