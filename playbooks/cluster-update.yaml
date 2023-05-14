@@ -1,0 +1,28 @@
+---
+# Updates kubernetes cluster configuration based on kubeadm configuration file
+# i.e. this playbook can be used to update the various static manifests of different kubernetes components
+# This playbook DOES NOT support rewriting SANs of control plane certificates
+# https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-reconfigure/#reconfiguring-the-cluster
+
+- name: Perform cluster update for first control plane node
+  hosts: "{{ groups.masters[0] }}"
+  become: yes
+  tasks:
+  - name: Copy kubeadm init config file
+    template: 
+      src: ../kubeadm-config.yaml
+      dest: "{{ const.kubeadm_config }}"
+
+  - name: Store updated kubeadm config file in cluster ConfigMap
+    command: kubeadm init phase upload-config all --config {{ const.kubeadm_config }}
+
+  - name: Write updated manifests
+    command: kubeadm init phase control-plane all --config {{ const.kubeadm_config }}
+
+- name: Update additional nodes
+  hosts: "{{ groups.masters[1:] + groups.workers }}"
+  become: yes
+  serial: 1
+  tasks:
+  - name: Update nodes
+    command: kubeadm upgrade node

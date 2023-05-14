@@ -1,0 +1,40 @@
+---
+- name: Initialise control plane on master node
+  hosts: "{{ groups.masters[0] }}"
+  become: yes
+  roles:
+  - role: cluster-create
+
+- name: Join additional nodes to cluster
+  hosts: "{{ groups.masters[1:] + groups.workers }}"
+  become: yes
+  tasks:     
+  - name: Install kubernetes componenets
+    apt:
+      allow_change_held_packages: true
+      update_cache: no
+      name:
+        - kubelet={{ version.kubernetes }}*
+        - kubectl={{ version.kubernetes }}*
+        - kubeadm={{ version.kubernetes }}*
+
+  - name: Join control plane node to cluster
+    command: "{{ hostvars.kubeadm_join.master }}"
+    when: ansible_default_ipv4.address in groups.masters
+
+  - name: Join worker node to cluster
+    command: "{{ hostvars.kubeadm_join.worker }}"
+    when: ansible_default_ipv4.address in groups.workers
+
+- name: Get Kubernetes nodes
+  hosts: "{{ groups.masters[0] }}"
+  become: yes
+  gather_facts: false
+  tasks:
+  - name: Get nodes
+    command: kubectl --kubeconfig {{ const.kubeconfig }} get nodes
+    register: get_nodes
+
+  - name: Print node list
+    debug:
+      msg: '{{ get_nodes.stdout }}'

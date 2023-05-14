@@ -1,0 +1,22 @@
+---
+# Upgrades kubeadm and plans the upgrade
+
+- name: Retrieve information about cluster upgrade
+  hosts: "{{ groups.masters[0] }}"
+  become: yes
+  tasks:
+  - name: Upgrade kubeadm
+    apt:
+      allow_change_held_packages: true
+      update_cache: no
+      name:
+      - kubeadm={{ version.kubernetes }}*
+
+  - name: Verify upgrade plan
+    command: kubeadm upgrade plan v{{ version.kubernetes }}
+    register: upgrade_plan
+
+  - name: Print upgrade plan information
+    debug:
+      msg: "{{ upgrade_plan.stdout }}"
+

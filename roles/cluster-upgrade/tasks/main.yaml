@@ -1,0 +1,46 @@
+---
+# Upgrades kubernetes version
+
+- name: Upgrade kubeadm
+  apt:
+    allow_change_held_packages: true
+    update_cache: no
+    name:
+    - kubeadm={{ version.kubernetes }}*
+
+- name: Upgrade kubernetes version for first control node
+  command: kubeadm upgrade apply -y v{{ version.kubernetes }}
+  when: ansible_default_ipv4.address == groups.masters[0]
+
+- name: Wait for cluster to be healthy after control node upgrade
+  command: kubectl --kubeconfig {{ const.kubeconfig }} cluster-info
+  register: kubectl_cluster_info
+  retries: 5
+  until: kubectl_cluster_info.rc == 0
+  when: ansible_default_ipv4.address in groups.masters
+
+- name: Upgrade kubernetes version for other nodes
+  command: kubeadm upgrade node
+  when: ansible_default_ipv4.address != groups.masters[0]
+
+- name: Drain kubernetes node
+  command: kubectl --kubeconfig {{ const.kubeconfig }} drain {{ ansible_facts["nodename"] }} --force --ignore-daemonsets --delete-emptydir-data
+  delegate_to: "{{ groups.masters[0] }}"
+
+- name: Upgrade kubelet and kubectl
+  apt:
+    allow_change_held_packages: true
+    update_cache: no
+    name:
+    - kubelet={{ version.kubernetes }}*
+    - kubectl={{ version.kubernetes }}*
+
+- name: Restart kubelet
+  systemd:
+    daemon_reload: yes
+    name: kubelet
+    state: restarted
+
+- name: Uncordon kubernetes node
+  command: kubectl --kubeconfig {{ const.kubeconfig }} uncordon {{ ansible_facts["nodename"] }}
+  delegate_to: "{{ groups.masters[0] }}"

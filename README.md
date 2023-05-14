@@ -2,65 +2,40 @@
 
 Ansible playbook to provision a kubernetes cluster via kubeadm
 
-This playbook is only supported for Ubuntu 20 LTS instances but should also work for Ubuntu 18 LTS
+This playbook has only been tested for Ubuntu 22.04 LTS (jammy) nodes
 
-## Preparation
+## Quickstart
 
-Run the following commands to prepare Python virtual environment for Ansible
+1. Install `ansible` tool by referring to documentation [here](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html#installing-and-upgrading-ansible)
 
-```
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
+2. Populate the `group_vars/all.yaml` with relevant configuration. This file contains configuration such as what version of Kubernetes and containerd to install
 
-## Usage
+3. Populate the `kubeadm-config.yaml` file with relevant configuration for your cluster. Please refer to the comments within this file and [kubeadm reference](https://kubernetes.io/docs/reference/config-api/kubeadm-config.v1beta3/) for more information
 
-Populate the `group_vars/all.yml` and `hosts.yml` with appropriate configuration
-
-Run the following command to install packages and kubernetes components required for cluster creation. This will also reboot the targeted nodes if required
-
-`ansible-playbook -i hosts.yml prerequisites.yml`
-
-Next, run the following command to provision the cluster
-
-`ansible-playbook -i hosts.yml cluster-create.yml`
-
-If errors are encountered during provisioning, or if you would like to clean-up the cluster, run the following command
-
-`ansible-playbook -i hosts.yml cluster-destroy.yml`
-
-To update cluster configuration (e.g. updating static manifests) without updating kubernetes version, run the following
-
-`ansible-playbook -i hosts.yml cluster-update.yml`
-
-Finally, to update the kubernetes version of the cluster, run the following
-
-`ansible-playbook -i hosts.yml cluster-upgrade.yml`
-
-## Configuration
-
-### Variables
-
-Variables are configured in the `group_vars/all.yml` file. Please refer to the comments within this file for supported options.
-
-### Hosts
-
-The `hosts.yml` file is structed as follows. Note that the IP address specified in `master` is the node where the `kubeadm init` command is run. The additional node IP addresses in `extra_masters` specify additional control plane nodes where the `kubeadm join` command is used. The node IPs specified in `workers` join the cluster with `kubeadm join` as worker nodes. 
+4. Add IP addresses of machines to `hosts.ini` file. Note that the first master node specified is the node where `kubeadm init` is run. For additional master nodes as well as worker nodes, `kubeadm join` is used
 
 ```
-all:
-  children:
-    master:
-      hosts:
-        <IP_OF_CONTROL_PLANE_NODE_1>:
-    extra_masters:
-      hosts:
-        <IP_OF_CONTROL_PLANE_NODE_2>:
-        <IP_OF_CONTROL_PLANE_NODE_3>:
-    workers:
-      hosts:
-        <IP_OF_WORKER_NODE_1>:
-        <IP_OF_WORKER_NODE_2>:
-        <IP_OF_WORKER_NODE_3>:
+[masters]
+<IP_OF_CONTROL_PLANE_NODE_1>
+<IP_OF_CONTROL_PLANE_NODE_2>
+<IP_OF_CONTROL_PLANE_NODE_3>
+
+[workers]
+<IP_OF_WORKER_NODE_1>
+<IP_OF_WORKER_NODE_2>
+<IP_OF_WORKER_NODE_3>
 ```
+
+4. Run the `make node-setup` command to install pre-requisite software on nodes (e.g. containerd) and `make cluster-create` to provision Kubernetes cluster
+
+## Reference
+
+| Command | Description |
+| --- | --- |
+| `make node-setup` | Performs pre-requisite steps and installs required software on nodes such as containerd |
+| `make cluster-create` | Provisions Kubernetes cluster based on `kubeadm-config.yaml` settings |
+| `make get-kubeconfig` | Generates an admin kubeconfig for the cluster, which is written to a folder within the `playbooks` directory |
+| `make cluster-update` | Updates cluster config based on adjustments to `kubeadm-config.yaml` file. Changing static manifests is the only supported operation by this playbook, refer [here](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-reconfigure/#reconfiguring-the-cluster) for more information |
+| `make cluster-upgrade-plan` | Plans cluster upgrade and prints ouptut for further review, recommended to run this before upgrading cluster |
+| `make cluster-upgrade` | Upgrades Kubernetes to the version specified in `group_vars/all.yaml` file |
+| `make cluster-destroy` | Deletes Kubernetes cluster |

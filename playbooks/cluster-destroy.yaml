@@ -1,0 +1,17 @@
+---
+- name: Revert kubernetes installation
+  hosts: all
+  become: yes
+  tasks:
+  - name: Revert kubeadm changes
+    command: kubeadm reset -f
+    ignore_errors: true
+    failed_when: false
+
+  - name: Clean IPTables entries
+    shell: iptables -F && iptables -t nat -F && iptables -t mangle -F && iptables -X
+    
+  - name: Delete Weave CNI config
+    file:
+      path: /etc/cni/net.d/10-weave.conflist
+      state: absent

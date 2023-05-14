@@ -1,6 +1,0 @@
----
-- name: Initialise control plane
-  import_tasks: control_plane.yml
-
-- name: Install CNI plugin
-  import_tasks: cni.yml
