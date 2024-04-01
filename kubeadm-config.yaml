@@ -19,12 +19,6 @@ apiServer:
   extraArgs: {}
 controllerManager:
   extraArgs: {}
-  extraVolumes:
-  - name: tz-info
-    hostPath: /usr/share/zoneinfo/Australia/Sydney
-    mountPath: /etc/localtime
-    readOnly: true
-    pathType: File
 scheduler:
   extraArgs: {}
 networking:

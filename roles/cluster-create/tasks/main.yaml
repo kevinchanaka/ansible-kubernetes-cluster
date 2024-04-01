@@ -22,6 +22,15 @@
       - kubectl={{ version.kubernetes }}*
       - kubeadm={{ version.kubernetes }}*
 
+- name: Hold kubernetes packages
+  dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop:
+  - kubelet
+  - kubectl
+  - kubeadm
+
 - name: Copy kubeadm init config file
   template: 
     src: ../../../kubeadm-config.yaml

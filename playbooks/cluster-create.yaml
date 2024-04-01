@@ -18,6 +18,15 @@
         - kubectl={{ version.kubernetes }}*
         - kubeadm={{ version.kubernetes }}*
 
+  - name: Hold kubernetes packages
+    dpkg_selections:
+      name: "{{ item }}"
+      selection: hold
+    loop:
+    - kubelet
+    - kubectl
+    - kubeadm
+
   - name: Join control plane node to cluster
     command: "{{ hostvars.kubeadm_join.master }}"
     when: ansible_default_ipv4.address in groups.masters
