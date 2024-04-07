@@ -66,6 +66,35 @@
     - gnupg
     - lsb-release
 
+- name: Copy multipath config file
+  copy:
+    src: multipath.conf
+    dest: /etc/multipath.conf
+  notify:
+  - Restart multipath-tools
+
+- name: Install NFS and iSCSI packages
+  apt:
+    name:
+    - nfs-common
+    - open-iscsi
+    - lsscsi
+    - sg3-utils
+    - multipath-tools
+    - scsitools
+
+- name: Enable multipath-tools service
+  systemd:
+    name: multipath-tools
+    enabled: true
+    state: started
+
+- name: Enable open-iscsi service
+  systemd:
+    name: open-iscsi
+    enabled: true
+    state: started
+
 - name: Create required directories
   file:
     path: "{{ item }}"
@@ -139,11 +168,11 @@
     update_cache: yes
     upgrade: yes
 
-- name: Check if reboot required
-  stat:
-    path: /var/run/reboot-required
-  register: reboot_required_file
+# - name: Check if reboot required
+#   stat:
+#     path: /var/run/reboot-required
+#   register: reboot_required_file
 
-- name: Reboot if required
-  reboot:
-  when: reboot_required_file.stat.exists == true
+# - name: Reboot if required
+#   reboot:
+#   when: reboot_required_file.stat.exists == true

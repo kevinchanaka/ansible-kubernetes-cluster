@@ -6,3 +6,9 @@
     state: restarted
     enabled: true
     
+- name: Restart multipath-tools
+  systemd:
+    name: multipath-tools
+    daemon_reload: true
+    state: restarted
+    enabled: true
