@@ -65,6 +65,7 @@
     - curl
     - gnupg
     - lsb-release
+    - python3-kubernetes
 
 - name: Copy multipath config file
   copy:
@@ -162,17 +163,27 @@
 - name: Flush handlers to restart containerd
   meta: flush_handlers
 
+- name: Ensure kubernetes packages are held if they exist
+  dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop:
+  - kubelet
+  - kubectl
+  - kubeadm
+  ignore_errors: true
+
 - name: Upgrade rest of OS packages
   apt:
     allow_change_held_packages: false
     update_cache: yes
     upgrade: yes
 
-# - name: Check if reboot required
-#   stat:
-#     path: /var/run/reboot-required
-#   register: reboot_required_file
+- name: Check if reboot required
+  stat:
+    path: /var/run/reboot-required
+  register: reboot_required_file
 
-# - name: Reboot if required
-#   reboot:
-#   when: reboot_required_file.stat.exists == true
+- name: Reboot if required and requested
+  reboot:
+  when: (reboot | bool == true) and (reboot_required_file.stat.exists == true)

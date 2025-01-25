@@ -1,12 +1,94 @@
 ---
-# Upgrades kubernetes version, please run cluster-upgrade-plan playbook first and refer to docs before upgrading
-# https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/
+# Upgrades kubeadm and performs control plane upgrade
+
+- name: Retrieve information about cluster upgrade
+  hosts: "{{ groups.masters[0] }}"
+  become: yes
+  tasks:
+  - name: Get installed kubernetes version
+    kubernetes.core.k8s_cluster_info:
+      kubeconfig: "{{ const.kubeconfig }}"
+    register: cluster_info
+
+  - name: Set kubernetes version
+    set_fact:
+      kubernetes_version: "{{ cluster_info.version.server.kubernetes.gitVersion | regex_replace('^v', '') }}"
+
+  - name: Fetch JSON data for kubernetes versions via GitHub API
+    uri:
+      url: https://api.github.com/repos/kubernetes/kubernetes/tags?per_page=100
+      method: GET
+      status_code: [200]
+    register: kubernetes_versions_response
+
+  - name: Parse version numbers from fetched JSON data
+    set_fact:
+      kubernetes_versions_list: "{{ (kubernetes_versions_response.json | json_query('[].name')) | list | reject('search', '-') | map('regex_replace', '^v', '') }}"
+
+  - name: Test provided version is valid
+    assert:
+      that:
+      - "input_version is version('2.0.0', 'lt', version_type='semver')"
+      - "input_version is version('0.0.0', 'gt', version_type='semver')" # Tests major version is 1
+      - "input_version is version(kubernetes_version, 'ge', version_type='semver')"
+      - "kubernetes_versions_list is contains(input_version)"
+      fail_msg: Invalid version {{ input_version }}
+
+  - name: Set kubernetes version to upgrade to
+    set_fact:
+      k8s_upgrade_minor_version: "{{ input_version.split('.')[0] }}.{{ input_version.split('.')[1] }}"
+      k8s_upgrade_patch_version: "{{ input_version }}"
+
+  - name: Setup kubernetes stable repository for new version
+    apt_repository:
+      repo: deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ k8s_upgrade_minor_version }}/deb/ /
+      filename: kubernetes
+      state: present
+
+  - name: Upgrade kubeadm
+    apt:
+      allow_change_held_packages: true
+      update_cache: yes
+      name:
+      - kubeadm={{ k8s_upgrade_minor_version }}*
+
+  - name: Verify upgrade plan
+    command: kubeadm upgrade plan v{{ k8s_upgrade_patch_version }}
+    changed_when: false
+    register: upgrade_plan
+
+  - name: Print upgrade plan information
+    debug:
+      msg: "{{ upgrade_plan.stdout }}"
+
+  - name: Stop playbook if upgrade flag is not set to true
+    assert:
+      that:
+      - upgrade | bool == true
+      quiet: true
+      success_msg: Proceeding with cluster upgrade since upgrade flag is set to true
+      fail_msg: Please review the above upgrade plan information, cluster upgrade can be continued by setting upgrade flag to true
+
+- name: Cordon all nodes prior to upgrade
+  hosts: all
+  become: yes
+  gather_facts: true
+  tasks:
+  - name: Cordon node
+    kubernetes.core.k8s_drain:
+      kubeconfig: "{{ const.kubeconfig }}"
+      state: cordon
+      name: "{{ ansible_facts.nodename }}"
+    delegate_to: "{{ groups.masters[0] }}"
 
 - name: Upgrade first control plane node
   hosts: "{{ groups.masters[0] }}"
   become: yes
   roles:
   - role: cluster-upgrade
+    vars:
+      k8s_upgrade_minor_version: "{{ hostvars[groups.masters[0]].k8s_upgrade_minor_version }}"
+      k8s_upgrade_patch_version: "{{ hostvars[groups.masters[0]].k8s_upgrade_patch_version }}"
 
 - name: Upgrade additional nodes
   hosts: "{{ groups.masters[1:] + groups.workers }}"
@@ -14,6 +96,9 @@
   serial: 1
   roles:
   - role: cluster-upgrade
+    vars:
+      k8s_upgrade_minor_version: "{{ hostvars[groups.masters[0]].k8s_upgrade_minor_version }}"
+      k8s_upgrade_patch_version: "{{ hostvars[groups.masters[0]].k8s_upgrade_patch_version }}"
 
 - name: Get Kubernetes nodes
   hosts: "{{ groups.masters[0] }}"
@@ -22,6 +107,7 @@
   tasks:
   - name: Get nodes
     command: kubectl --kubeconfig {{ const.kubeconfig }} get nodes
+    changed_when: false
     register: get_nodes
 
   - name: Print node list

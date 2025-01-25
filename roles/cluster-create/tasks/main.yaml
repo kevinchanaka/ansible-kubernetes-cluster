@@ -54,4 +54,4 @@
     master: "{{ kubeadm_join_command.stdout }} --control-plane --certificate-key {{ kubeadm_certs.stdout_lines[-1] }}" 
 
 - name: Install weave-net CNI plugin
-  command: kubectl --kubeconfig {{ const.kubeconfig }} apply -f "https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml"
+  command: kubectl --kubeconfig {{ const.kubeconfig }} apply -f "https://github.com/rajch/weave/releases/latest/download/weave-daemonset-k8s-1.11.yaml"

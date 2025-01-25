@@ -1,7 +1,7 @@
 .PHONY: node-setup cluster-create get-kubeconfig cluster-upgrade-plan cluster-upgrade cluster-update cluster-destroy
 
 node-setup :
-	ansible-playbook -i hosts.ini playbooks/node-setup.yaml
+	ansible-playbook -i hosts.ini playbooks/node-setup.yaml -e "reboot=${reboot}"
 
 cluster-create :
 	ansible-playbook -i hosts.ini playbooks/cluster-create.yaml
@@ -9,11 +9,8 @@ cluster-create :
 get-kubeconfig :
 	ansible-playbook -i hosts.ini playbooks/get-kubeconfig.yaml
 
-cluster-upgrade-plan :
-	ansible-playbook -i hosts.ini playbooks/cluster-upgrade-plan.yaml
-
 cluster-upgrade :
-	ansible-playbook -i hosts.ini playbooks/cluster-upgrade.yaml
+	ansible-playbook -i hosts.ini playbooks/cluster-upgrade.yaml -e "input_version=${version} upgrade=${upgrade}"
 
 cluster-update :
 	ansible-playbook -i hosts.ini playbooks/cluster-update.yaml

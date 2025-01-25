@@ -1,30 +1,42 @@
 ---
 # Upgrades kubernetes version
 
+- name: Setup kubernetes stable repository for new version
+  apt_repository:
+    repo: deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ k8s_upgrade_minor_version }}/deb/ /
+    filename: kubernetes
+    state: present
+
 - name: Upgrade kubeadm
   apt:
     allow_change_held_packages: true
-    update_cache: no
+    update_cache: yes
     name:
-    - kubeadm={{ version.kubernetes }}*
+    - kubeadm={{ k8s_upgrade_minor_version }}*
 
 - name: Upgrade kubernetes version for first control node
-  command: kubeadm upgrade apply -y v{{ version.kubernetes }}
+  command: kubeadm upgrade apply -y v{{ k8s_upgrade_patch_version }}
   when: ansible_default_ipv4.address == groups.masters[0]
 
-- name: Wait for cluster to be healthy after control node upgrade
-  command: kubectl --kubeconfig {{ const.kubeconfig }} cluster-info
-  register: kubectl_cluster_info
-  retries: 5
-  until: kubectl_cluster_info.rc == 0
-  when: ansible_default_ipv4.address in groups.masters
+- name: Verify that cluster is healthy
+  kubernetes.core.k8s_cluster_info:
+    kubeconfig: "{{ const.kubeconfig }}"
+  retries: 10
+  when: ansible_host in groups['masters']
 
 - name: Upgrade kubernetes version for other nodes
   command: kubeadm upgrade node
   when: ansible_default_ipv4.address != groups.masters[0]
 
 - name: Drain kubernetes node
-  command: kubectl --kubeconfig {{ const.kubeconfig }} drain {{ ansible_facts["nodename"] }} --force --ignore-daemonsets --delete-emptydir-data
+  kubernetes.core.k8s_drain:
+    kubeconfig: "{{ const.kubeconfig }}"
+    state: drain
+    name: "{{ ansible_facts.nodename }}"
+    delete_options:
+      force: true
+      delete_emptydir_data: true
+      ignore_daemonsets: true
   delegate_to: "{{ groups.masters[0] }}"
 
 - name: Upgrade kubelet and kubectl
@@ -32,8 +44,8 @@
     allow_change_held_packages: true
     update_cache: no
     name:
-    - kubelet={{ version.kubernetes }}*
-    - kubectl={{ version.kubernetes }}*
+    - kubelet={{ k8s_upgrade_minor_version }}*
+    - kubectl={{ k8s_upgrade_minor_version }}*
 
 - name: Restart kubelet
   systemd:
@@ -42,5 +54,17 @@
     state: restarted
 
 - name: Uncordon kubernetes node
-  command: kubectl --kubeconfig {{ const.kubeconfig }} uncordon {{ ansible_facts["nodename"] }}
+  kubernetes.core.k8s_drain:
+    kubeconfig: "{{ const.kubeconfig }}"
+    state: uncordon
+    name: "{{ ansible_facts.nodename }}"
   delegate_to: "{{ groups.masters[0] }}"
+
+- name: Ensure kubernetes packages are held
+  dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop:
+  - kubelet
+  - kubectl
+  - kubeadm
