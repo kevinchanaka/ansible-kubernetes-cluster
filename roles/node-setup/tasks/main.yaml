@@ -177,7 +177,8 @@
   apt:
     allow_change_held_packages: false
     update_cache: yes
-    upgrade: yes
+    upgrade: dist
+    autoremove: true
 
 - name: Check if reboot required
   stat:
