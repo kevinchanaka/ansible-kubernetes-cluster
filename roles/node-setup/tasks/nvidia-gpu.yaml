@@ -1,0 +1,61 @@
+---
+- name: Add NVIDIA drivers PPA apt repository
+  apt_repository: 
+    repo: ppa:graphics-drivers/ppa
+
+- name: Install GPG key for NVIDIA container toolkit
+  apt_key:
+    keyring: /etc/apt/keyrings/nvidia-container-toolkit-keyring.gpg
+    url: https://nvidia.github.io/libnvidia-container/gpgkey
+
+- name: Setup NVIDIA container toolkit production repository
+  apt_repository:
+    repo: deb [signed-by=/etc/apt/keyrings/nvidia-container-toolkit-keyring.gpg] https://nvidia.github.io/libnvidia-container/stable/deb/$(ARCH) /
+    filename: nvidia-container-toolkit
+    state: present
+
+- name: Install NVIDIA drivers
+  apt:
+    allow_change_held_packages: false
+    update_cache: yes
+    name:
+    - nvidia-headless-{{ version.nvidia_drivers }}-open
+    - libnvidia-decode-{{ version.nvidia_drivers }}
+    - libnvidia-encode-{{ version.nvidia_drivers }}
+
+# - name: Install CUDA keyring package
+#   apt:
+#     deb: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb
+
+# - name: Install CUDA SDK
+#   apt:
+#     allow_change_held_packages: false
+#     update_cache: yes
+#     name:
+#     - cuda-toolkit
+
+# - name: Install GDS packages
+#   apt:
+#     allow_change_held_packages: false
+#     update_cache: no
+#     name:
+#     - nvidia-gds
+
+- name: Install NVIDIA container toolkit packages
+  apt:
+    allow_change_held_packages: false
+    update_cache: no
+    name:
+    - nvidia-container-toolkit={{ version.nvidia_container_toolkit }}*
+    - nvidia-container-toolkit-base={{ version.nvidia_container_toolkit }}*
+    - libnvidia-container-tools={{ version.nvidia_container_toolkit }}*
+    - libnvidia-container1={{ version.nvidia_container_toolkit }}*
+
+- name: Configure containerd for NVIDIA GPU support
+  command: nvidia-ctk runtime configure --runtime=containerd
+  become: yes
+  notify:
+  - Restart containerd
+
+- name: Flush handlers to restart containerd
+  meta: flush_handlers

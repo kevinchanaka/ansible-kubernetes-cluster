@@ -173,6 +173,15 @@
   - kubeadm
   ignore_errors: true
 
+- name: Check if NVIDIA GPU is detected
+  shell: lspci | grep -i nvidia || true
+  register: nvidia_gpu_check
+  changed_when: false
+
+- name: Setup NVIDIA GPU drivers if GPU is detected
+  include_tasks: nvidia-gpu.yaml
+  when: nvidia_gpu_check.stdout | length > 0
+
 - name: Upgrade rest of OS packages
   apt:
     allow_change_held_packages: false
