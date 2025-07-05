@@ -14,32 +14,16 @@
     filename: nvidia-container-toolkit
     state: present
 
+# NOTE: should install open drivers (nvidia-headless-<VERSION>-open) for newer GPUs https://developer.nvidia.com/blog/nvidia-transitions-fully-towards-open-source-gpu-kernel-modules/
 - name: Install NVIDIA drivers
   apt:
     allow_change_held_packages: false
     update_cache: yes
     name:
-    - nvidia-headless-{{ version.nvidia_drivers }}-open
+    - nvidia-headless-{{ version.nvidia_drivers }}
+    - nvidia-utils-{{ version.nvidia_drivers }}
     - libnvidia-decode-{{ version.nvidia_drivers }}
     - libnvidia-encode-{{ version.nvidia_drivers }}
-
-# - name: Install CUDA keyring package
-#   apt:
-#     deb: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb
-
-# - name: Install CUDA SDK
-#   apt:
-#     allow_change_held_packages: false
-#     update_cache: yes
-#     name:
-#     - cuda-toolkit
-
-# - name: Install GDS packages
-#   apt:
-#     allow_change_held_packages: false
-#     update_cache: no
-#     name:
-#     - nvidia-gds
 
 - name: Install NVIDIA container toolkit packages
   apt:
