@@ -1,22 +1,22 @@
 ---
 - name: Add NVIDIA drivers PPA apt repository
-  ansible.builtin.apt_repository:
+  apt_repository:
     repo: ppa:graphics-drivers/ppa
 
 - name: Install GPG key for NVIDIA container toolkit
-  ansible.builtin.apt_key:
+  apt_key:
     keyring: /etc/apt/keyrings/nvidia-container-toolkit-keyring.gpg
     url: https://nvidia.github.io/libnvidia-container/gpgkey
 
 - name: Setup NVIDIA container toolkit production repository
-  ansible.builtin.apt_repository:
+  apt_repository:
     repo: deb [signed-by=/etc/apt/keyrings/nvidia-container-toolkit-keyring.gpg] https://nvidia.github.io/libnvidia-container/stable/deb/$(ARCH) /
     filename: nvidia-container-toolkit
     state: present
 
 # NOTE: should install open drivers (nvidia-headless-<VERSION>-open) for newer GPUs https://developer.nvidia.com/blog/nvidia-transitions-fully-towards-open-source-gpu-kernel-modules/
 - name: Install NVIDIA drivers
-  ansible.builtin.apt:
+  apt:
     allow_change_held_packages: false
     update_cache: true
     name:
@@ -26,7 +26,7 @@
       - libnvidia-encode-{{ version.nvidia_drivers }}
 
 - name: Install NVIDIA container toolkit packages
-  ansible.builtin.apt:
+  apt:
     allow_change_held_packages: false
     update_cache: false
     name:
@@ -36,10 +36,10 @@
       - libnvidia-container1={{ version.nvidia_container_toolkit }}*
 
 - name: Configure containerd for NVIDIA GPU support
-  ansible.builtin.command: nvidia-ctk runtime configure --runtime=containerd
+  command: nvidia-ctk runtime configure --runtime=containerd
   become: true
   notify:
     - Restart containerd
 
 - name: Flush handlers to restart containerd
-  ansible.builtin.meta: flush_handlers
+  meta: flush_handlers

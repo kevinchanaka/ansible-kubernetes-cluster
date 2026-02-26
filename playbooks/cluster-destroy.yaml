@@ -4,22 +4,22 @@
   become: true
   tasks:
     - name: Revert kubeadm changes
-      ansible.builtin.command: kubeadm reset -f
+      command: kubeadm reset -f
       ignore_errors: true
       failed_when: false
 
     - name: Clean IPTables entries
-      ansible.builtin.shell: iptables -F && iptables -t nat -F && iptables -t mangle -F && iptables -X
+      shell: iptables -F && iptables -t nat -F && iptables -t mangle -F && iptables -X
       ignore_errors: true
       failed_when: false
 
     - name: Clean nftables entries
-      ansible.builtin.shell: nft flush ruleset
+      shell: nft flush ruleset
       ignore_errors: true
       failed_when: false
 
     - name: Uninstall kubernetes packages
-      ansible.builtin.apt:
+      apt:
         allow_change_held_packages: true
         update_cache: false
         name:
@@ -29,18 +29,18 @@
         state: absent
 
     - name: Find all files in CNI config directory
-      ansible.builtin.find:
+      find:
         paths: /etc/cni/net.d
         file_type: any
       register: files_to_delete
 
     - name: Delete CNI config
-      ansible.builtin.file:
+      file:
         path: "{{ item.path }}"
         state: absent
       loop: "{{ files_to_delete.files }}"
 
     - name: Delete kubeadm config
-      ansible.builtin.file:
+      file:
         path: "{{ const.kubeadm_config }}"
         state: absent

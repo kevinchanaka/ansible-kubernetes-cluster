@@ -2,20 +2,20 @@
 # Upgrades kubernetes version
 
 - name: Setup kubernetes stable repository for new version
-  ansible.builtin.apt_repository:
+  apt_repository:
     repo: deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ k8s_upgrade_minor_version }}/deb/ /
     filename: kubernetes
     state: present
 
 - name: Upgrade kubeadm
-  ansible.builtin.apt:
+  apt:
     allow_change_held_packages: true
     update_cache: true
     name:
       - kubeadm={{ k8s_upgrade_minor_version }}*
 
 - name: Upgrade kubernetes version for first control node
-  ansible.builtin.command: kubeadm upgrade apply -y v{{ k8s_upgrade_patch_version }}
+  command: kubeadm upgrade apply -y v{{ k8s_upgrade_patch_version }}
   when: ansible_default_ipv4.address == groups.masters[0]
 
 - name: Verify that cluster is healthy
@@ -25,7 +25,7 @@
   when: ansible_host in groups['masters']
 
 - name: Upgrade kubernetes version for other nodes
-  ansible.builtin.command: kubeadm upgrade node
+  command: kubeadm upgrade node
   when: ansible_default_ipv4.address != groups.masters[0]
 
 - name: Drain kubernetes node
@@ -40,7 +40,7 @@
   delegate_to: "{{ groups.masters[0] }}"
 
 - name: Upgrade kubelet and kubectl
-  ansible.builtin.apt:
+  apt:
     allow_change_held_packages: true
     update_cache: false
     name:
@@ -48,7 +48,7 @@
       - kubectl={{ k8s_upgrade_minor_version }}*
 
 - name: Restart kubelet
-  ansible.builtin.systemd:
+  systemd:
     daemon_reload: true
     name: kubelet
     state: restarted
@@ -61,7 +61,7 @@
   delegate_to: "{{ groups.masters[0] }}"
 
 - name: Ensure kubernetes packages are held
-  ansible.builtin.dpkg_selections:
+  dpkg_selections:
     name: "{{ item }}"
     selection: hold
   loop:

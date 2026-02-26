@@ -39,7 +39,7 @@
       command: kubeadm upgrade node phase kubelet-config
 
     - name: Restart kubelet
-      ansible.builtin.systemd:
+      systemd:
         daemon_reload: true
         name: kubelet
         state: restarted
@@ -73,7 +73,7 @@
       command: kubeadm upgrade node phase kubelet-config
 
     - name: Restart kubelet
-      ansible.builtin.systemd:
+      systemd:
         daemon_reload: true
         name: kubelet
         state: restarted
