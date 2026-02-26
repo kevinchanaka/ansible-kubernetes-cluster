@@ -1,13 +1,13 @@
 ---
 - name: Restart containerd
-  systemd:
+  ansible.builtin.systemd:
     name: containerd
     daemon_reload: true
     state: restarted
     enabled: true
-    
+
 - name: Restart multipath-tools
-  systemd:
+  ansible.builtin.systemd:
     name: multipath-tools
     daemon_reload: true
     state: restarted

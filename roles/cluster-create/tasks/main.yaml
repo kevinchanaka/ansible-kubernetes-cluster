@@ -2,56 +2,56 @@
 # Initialises control plane components on the main master node
 
 - name: Check if kubernetes is already installed
-  command: kubectl --kubeconfig {{ const.kubeconfig }} version
+  ansible.builtin.command: kubectl --kubeconfig {{ const.kubeconfig }} version
   ignore_errors: true
   failed_when: false
   changed_when: false
   register: kubernetes_installed_check
 
 - name: Exit early if kubernetes is already installed
-  fail: 
+  ansible.builtin.fail:
     msg: "{{ kubernetes_installed_check.stdout }}"
   when: kubernetes_installed_check.rc == 0
 
-- name: Install kubernetes componenets
-  apt:
-    allow_change_held_packages: true
-    update_cache: no
-    name:
-      - kubelet={{ version.kubernetes }}*
-      - kubectl={{ version.kubernetes }}*
-      - kubeadm={{ version.kubernetes }}*
+# - name: Install kubernetes componenets
+#   ansible.builtin.apt:
+#     allow_change_held_packages: true
+#     update_cache: false
+#     name:
+#       - kubelet={{ version.kubernetes }}*
+#       - kubectl={{ version.kubernetes }}*
+#       - kubeadm={{ version.kubernetes }}*
 
-- name: Hold kubernetes packages
-  dpkg_selections:
-    name: "{{ item }}"
-    selection: hold
-  loop:
-  - kubelet
-  - kubectl
-  - kubeadm
+# - name: Hold kubernetes packages
+#   ansible.builtin.dpkg_selections:
+#     name: "{{ item }}"
+#     selection: hold
+#   loop:
+#     - kubelet
+#     - kubectl
+#     - kubeadm
 
 - name: Copy kubeadm init config file
-  template: 
-    src: ../../../kubeadm-config.yaml
+  ansible.builtin.template:
+    src: "{{ inventory_dir}}/config/kubeadm-config.yaml"
     dest: "{{ const.kubeadm_config }}"
 
 - name: Initialise control plane components
-  command: kubeadm init --config {{ const.kubeadm_config }}
+  ansible.builtin.command: kubeadm init --config {{ const.kubeadm_config }}
 
 - name: Upload certificates to kubeadm-certs secret in kube-system namespace
-  command: kubeadm init phase upload-certs --upload-certs --config {{ const.kubeadm_config }}
+  ansible.builtin.command: kubeadm init phase upload-certs --upload-certs --config {{ const.kubeadm_config }}
   register: kubeadm_certs
 
 - name: Generate join command for other nodes
-  command: kubeadm token create --print-join-command --config {{ const.kubeadm_config }}
+  ansible.builtin.command: kubeadm token create --print-join-command --config {{ const.kubeadm_config }}
   register: kubeadm_join_command
 
 - name: Set join command in host variable
-  add_host:
+  ansible.builtin.add_host:
     name: kubeadm_join
     worker: "{{ kubeadm_join_command.stdout }}"
-    master: "{{ kubeadm_join_command.stdout }} --control-plane --certificate-key {{ kubeadm_certs.stdout_lines[-1] }}" 
+    master: "{{ kubeadm_join_command.stdout }} --control-plane --certificate-key {{ kubeadm_certs.stdout_lines[-1] }}"
 
-- name: Install weave-net CNI plugin
-  command: kubectl --kubeconfig {{ const.kubeconfig }} apply -f "https://github.com/rajch/weave/releases/latest/download/weave-daemonset-k8s-1.11.yaml"
+# - name: Install weave-net CNI plugin
+#   ansible.builtin.command: kubectl --kubeconfig {{ const.kubeconfig }} apply -f "https://github.com/rajch/weave/releases/latest/download/weave-daemonset-k8s-1.11.yaml"

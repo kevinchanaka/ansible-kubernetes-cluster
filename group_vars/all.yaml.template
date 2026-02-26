@@ -1,4 +1,8 @@
----
+# Constant values, do not change
+const:
+  kubeconfig: /etc/kubernetes/admin.conf
+  kubeadm_config: /etc/kubernetes/kubeadm-config.yaml
+
 # Specify component versions to install
 version:
   kubernetes: 1.32.0  # https://kubernetes.io/releases/
@@ -8,7 +12,3 @@ version:
   crictl: 1.32.0      # https://github.com/kubernetes-sigs/cri-tools/releases
   nvidia_drivers: 570 # https://launchpad.net/~graphics-drivers/+archive/ubuntu/ppa
   nvidia_container_toolkit: 1.17.8 # https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/release-notes.html
-# Constant values, do not change
-const:
-  kubeconfig: /etc/kubernetes/admin.conf
-  kubeadm_config: /etc/kubernetes/kubeadm-config.yaml

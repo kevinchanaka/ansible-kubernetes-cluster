@@ -1,0 +1,29 @@
+---
+- name: Copy multipath config file
+  ansible.builtin.copy:
+    src: multipath.conf
+    dest: /etc/multipath.conf
+  notify:
+    - Restart multipath-tools
+
+- name: Install NFS and iSCSI packages
+  ansible.builtin.apt:
+    name:
+      - nfs-common
+      - open-iscsi
+      - lsscsi
+      - sg3-utils
+      - multipath-tools
+      - scsitools
+
+- name: Enable multipath-tools service
+  ansible.builtin.systemd:
+    name: multipath-tools
+    enabled: true
+    state: started
+
+- name: Enable open-iscsi service
+  ansible.builtin.systemd:
+    name: open-iscsi
+    enabled: true
+    state: started

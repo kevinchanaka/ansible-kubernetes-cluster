@@ -1,8 +1,8 @@
 ---
 - name: Install required components for cluster creation
   hosts: all
-  become: yes
+  become: true
   roles:
-  - role: node-setup
-    tags:
-    - node-setup
+    - role: node-setup
+      tags:
+        - node-setup

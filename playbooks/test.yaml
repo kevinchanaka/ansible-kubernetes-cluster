@@ -1,14 +1,16 @@
+---
 - name: Test
-  hosts: all
-  become: yes
+  hosts: "{{ groups.masters[0] }}"
+  become: true
   tasks:
-  - name: test 1
-    command: echo "test 1"
-
-  - name: Check if NVIDIA GPU is detected
-    shell: lspci | grep -i nvidia || true
-    register: nvidia_gpu_check
-    changed_when: false
-  - name: Print NVIDIA GPU detection result
-    debug:
-      msg: "{{ nvidia_gpu_check.stdout | length > 0 }}"
+    - name: Test 1
+      command: echo "test 1"
+    - name: Check if NVIDIA GPU is detected
+      shell: lspci | grep -i nvidia || true
+      register: nvidia_gpu_check
+      changed_when: false
+    - name: Print NVIDIA GPU detection result
+      debug:
+        msg: "{{ nvidia_gpu_check.stdout | length > 0 }}"
+    - name: Stream output
+      shell: while true; do sleep 1 && echo `date`; done | tee

@@ -1,6 +1,7 @@
-## NOTE: Sample audit log configuration is based on Google's configuration below
-## https://github.com/kubernetes/kubernetes/blob/master/cluster/gce/gci/configure-helper.sh#L1131
-## Rule syntax information here https://kubernetes.io/docs/reference/config-api/apiserver-audit.v1/#audit-k8s-io-v1-PolicyRule
+---
+# NOTE: Sample audit log configuration is based on Google's configuration below
+# https://github.com/kubernetes/kubernetes/blob/master/cluster/gce/gci/configure-helper.sh#L1131
+# Rule syntax information here https://kubernetes.io/docs/reference/config-api/apiserver-audit.v1/#audit-k8s-io-v1-PolicyRule
 apiVersion: audit.k8s.io/v1
 kind: Policy
 rules:
@@ -10,13 +11,13 @@ rules:
     users: ["system:kube-proxy"]
     verbs: ["watch"]
     resources:
-      - group: "" 
+      - group: ""
         resources: ["endpoints", "services", "services/status"]
   - level: None
     users: ["kubelet"] # legacy kubelet identity
     verbs: ["get"]
     resources:
-      - group: "" 
+      - group: ""
         resources: ["nodes", "nodes/status"]
   - level: None
     userGroups: ["system:nodes"]

@@ -1,49 +1,62 @@
 ---
+- name: Install kubernetes components on all nodes
+  hosts: all
+  become: true
+  tasks:
+    - name: Install kubernetes componenets
+      apt:
+        allow_change_held_packages: true
+        update_cache: false
+        name:
+          - kubelet={{ version.kubernetes }}*
+          - kubectl={{ version.kubernetes }}*
+          - kubeadm={{ version.kubernetes }}*
+
+    - name: Hold kubernetes packages
+      dpkg_selections:
+        name: "{{ item }}"
+        selection: hold
+      loop:
+        - kubelet
+        - kubectl
+        - kubeadm
+
 - name: Initialise control plane on master node
   hosts: "{{ groups.masters[0] }}"
-  become: yes
+  become: true
   roles:
-  - role: cluster-create
+    - role: cluster-create
 
-- name: Join additional nodes to cluster
-  hosts: "{{ groups.masters[1:] + groups.workers }}"
-  become: yes
-  tasks:     
-  - name: Install kubernetes componenets
-    apt:
-      allow_change_held_packages: true
-      update_cache: no
-      name:
-        - kubelet={{ version.kubernetes }}*
-        - kubectl={{ version.kubernetes }}*
-        - kubeadm={{ version.kubernetes }}*
+- name: Join additional control plane nodes to cluster
+  hosts: "{{ groups.masters[1:] }}"
+  become: true
+  tasks:
+    - name: Join control plane node
+      command: "{{ hostvars.kubeadm_join.master }}"
 
-  - name: Hold kubernetes packages
-    dpkg_selections:
-      name: "{{ item }}"
-      selection: hold
-    loop:
-    - kubelet
-    - kubectl
-    - kubeadm
-
-  - name: Join control plane node to cluster
-    command: "{{ hostvars.kubeadm_join.master }}"
-    when: ansible_default_ipv4.address in groups.masters
-
-  - name: Join worker node to cluster
-    command: "{{ hostvars.kubeadm_join.worker }}"
-    when: ansible_default_ipv4.address in groups.workers
+- name: Join additional worker plane nodes to cluster
+  hosts: "{{ groups.workers }}"
+  become: true
+  tasks:
+    - name: Join worker node
+      command: "{{ hostvars.kubeadm_join.worker }}"
 
 - name: Get Kubernetes nodes
   hosts: "{{ groups.masters[0] }}"
-  become: yes
+  become: true
   gather_facts: false
   tasks:
-  - name: Get nodes
-    command: kubectl --kubeconfig {{ const.kubeconfig }} get nodes
-    register: get_nodes
+    - name: Get nodes
+      command: kubectl get nodes
+      environment:
+        KUBECONFIG: "{{ const.kubeconfig }}"
+      register: get_nodes
+      changed_when: false
 
-  - name: Print node list
-    debug:
-      msg: '{{ get_nodes.stdout }}'
+    - name: Print node list
+      debug:
+        var: get_nodes.stdout_lines
+
+    - name: Print message
+      debug:
+        msg: Cluster has been created. Please install your desired CNI plugin manually

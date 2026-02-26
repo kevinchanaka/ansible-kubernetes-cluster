@@ -1,0 +1,4 @@
+group_vars/all.yaml
+hosts.ini
+config/kubeadm-config.yaml
+.ansible

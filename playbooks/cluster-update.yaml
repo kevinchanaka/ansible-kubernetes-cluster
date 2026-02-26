@@ -6,23 +6,74 @@
 
 - name: Perform cluster update for first control plane node
   hosts: "{{ groups.masters[0] }}"
-  become: yes
+  become: true
   tasks:
-  - name: Copy kubeadm init config file
-    template: 
-      src: ../kubeadm-config.yaml
-      dest: "{{ const.kubeadm_config }}"
+    - name: Copy kubeadm init config file
+      template:
+        src: ../config/kubeadm-config.yaml
+        dest: "{{ const.kubeadm_config }}"
 
-  - name: Store updated kubeadm config file in cluster ConfigMap
-    command: kubeadm init phase upload-config all --config {{ const.kubeadm_config }}
+    - name: Store updated kubeadm and kubelet config file in cluster ConfigMap
+      command: kubeadm init phase upload-config all --config {{ const.kubeadm_config }}
 
-  - name: Write updated manifests
-    command: kubeadm init phase control-plane all --config {{ const.kubeadm_config }}
+    - name: Write updated manifests for control plane components
+      command: kubeadm init phase control-plane all --config {{ const.kubeadm_config }}
 
-- name: Update additional nodes
+    - name: Write updated manifests for local etcd
+      command: kubeadm init phase etcd local --config {{ const.kubeadm_config }}
+
+    - name: Write updated addon configuration
+      command: kubeadm init phase addon all --config {{ const.kubeadm_config }}
+
+    - name: Restart kube-proxy pods
+      command: kubectl rollout restart daemonset -n kube-system kube-proxy
+      environment:
+        KUBECONFIG: "{{ const.kubeconfig }}"
+    
+    - name: Restart CoreDNS pods
+      command: kubectl rollout restart deployment -n kube-system coredns
+      environment:
+        KUBECONFIG: "{{ const.kubeconfig }}"
+
+    - name: Update node
+      command: kubeadm upgrade node phase kubelet-config
+
+    - name: Restart kubelet
+      ansible.builtin.systemd:
+        daemon_reload: true
+        name: kubelet
+        state: restarted
+
+    - name: Wait for cluster to be healthy
+      kubernetes.core.k8s_cluster_info:
+        kubeconfig: "{{ const.kubeconfig }}"
+      retries: 10
+
+- name: Perform cluster update for additional control plane nodes
+  hosts: "{{ groups.masters[1:] }}"
+  become: true
+  tasks:
+    - name: Copy kubeadm init config file
+      template:
+        src: "{{ inventory_dir }}/config/kubeadm-config.yaml"
+        dest: "{{ const.kubeadm_config }}"
+
+    - name: Write updated manifests for control plane components
+      command: kubeadm init phase control-plane all --config {{ const.kubeadm_config }}
+
+    - name: Write updated manifests for local etcd
+      command: kubeadm init phase etcd local --config {{ const.kubeadm_config }}
+
+- name: Update kubelet configuration on remaining nodes
   hosts: "{{ groups.masters[1:] + groups.workers }}"
-  become: yes
+  become: true
   serial: 1
   tasks:
-  - name: Update nodes
-    command: kubeadm upgrade node
+    - name: Update node
+      command: kubeadm upgrade node phase kubelet-config
+
+    - name: Restart kubelet
+      ansible.builtin.systemd:
+        daemon_reload: true
+        name: kubelet
+        state: restarted
